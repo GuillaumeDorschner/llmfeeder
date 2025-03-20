@@ -1,0 +1,8 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: llmf
+Upstream-Contact: Guillaume Dorschner <guillaume.dorschner@icloud.com>
+License: MIT
+
+Files: \*
+Copyright: 2025 Guillaume Dorschner
+License: MIT

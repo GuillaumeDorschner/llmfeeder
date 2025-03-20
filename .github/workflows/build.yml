@@ -1,0 +1,140 @@
+name: Build and Deploy Packages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - src/**
+      - usr/**
+      - debian/**
+      - rpmbuild/**
+      - .github/workflows/**
+      - VERSION
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build-debian:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Get version
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y dpkg-dev git
+
+      - name: Build Debian package
+        run: |
+          mkdir -p build/deb
+          mkdir -p debian/DEBIAN
+          mkdir -p debian/usr/local/bin
+          mkdir -p debian/usr/share/man/man1
+          cp src/llmf debian/usr/local/bin/llmf
+          cp usr/share/man/man1/llmf.1 debian/usr/share/man/man1/llmf.1
+
+          cat <<EOF > debian/DEBIAN/control
+          Package: llmfeeder
+          Version: ${{ env.VERSION }}
+          Section: utils
+          Priority: optional
+          Architecture: all
+          Maintainer: Guillaume Dorschner <guillaume.dorschner@icloud.com>
+          Depends: bash, tree, xclip
+          Description: CLI tool to feed your LLM the necessary context to get help
+          EOF
+
+          dpkg-deb --build debian build/deb/llmfeeder_${{ env.VERSION }}.deb
+
+      - name: Upload Debian artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: llmfeeder-deb-${{ env.VERSION }}
+          path: build/deb/*.deb
+
+  build-redhat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Get version
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
+
+      - name: Setup
+        run: mkdir -p rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+
+      - name: Run AlmaLinux Container and Build RPM
+        run: |
+          docker run --rm -v "$(pwd)":/workspace -w /workspace almalinux:latest /bin/bash -c '
+            dnf install -y rpm-build git tar
+            sed -i "s/^Version: .*$/Version:        ${{ env.VERSION }}/" rpmbuild/SPECS/llmf.spec
+            mkdir -p /workspace/rpmbuild/SOURCES/
+            tar --transform="s,^,llmfeeder-${{ env.VERSION }}/," -czvf /workspace/rpmbuild/SOURCES/llmfeeder-${{ env.VERSION }}.tar.gz src/ usr/
+            rpmbuild --define "_topdir /workspace/rpmbuild" -bb rpmbuild/SPECS/llmf.spec
+          '
+
+      - name: Upload RPM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: llmfeeder-rpm-${{ env.VERSION }}
+          path: rpmbuild/RPMS/noarch/*.rpm
+
+  push-packages:
+    runs-on: ubuntu-latest
+    needs: [build-debian, build-redhat]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Get version
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
+
+      - name: Prepare folder structure
+        run: |
+          mkdir -p core/stable/apt
+          mkdir -p core/stable/rpm
+
+      - name: Download Debian artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: llmfeeder-deb-${{ env.VERSION }}
+          path: core/stable/apt/
+
+      - name: Download RPM artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: llmfeeder-rpm-${{ env.VERSION }}
+          path: core/stable/rpm/
+
+      - name: Generate APT Repository
+        run: |
+          dpkg-scanpackages core/stable/apt /dev/null | gzip -9 > core/stable/apt/Packages.gz
+
+      - name: Run AlmaLinux Container and Generate YUM Repository
+        run: |
+          docker run --rm -v "$(pwd)":/workspace -w /workspace almalinux:latest /bin/bash -c '
+            dnf install -y createrepo
+            createrepo core/stable/rpm
+            '
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'Updated repository metadata for version ${{ env.VERSION }}'
+          commit_user_name: 'GitHub Actions'

@@ -1,0 +1,65 @@
+#!/bin/bash
+
+show_help() {
+  echo "Usage: llmf [OPTIONS]"
+  echo "CLI tool to feed your LLM the necessary context to get help."
+  echo ""
+  echo "Options:"
+  echo "  -d, --dir PATH      Specify the directory to process (default: current dir)"
+  echo "  -o, --output FILE   Output result to FILE instead of clipboard"
+  echo "      --no-xclip      Disable copying to clipboard"
+  echo "  -h, --help          Show help"
+  exit 0
+}
+
+DIR="."
+OUTPUT_FILE=""
+USE_XCLIP=true
+
+# Args
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
+    -d|--dir) DIR="$2"; shift ;;
+    -o|--output) OUTPUT_FILE="$2"; shift ;;
+    --no-xclip) USE_XCLIP=false ;;
+    -h|--help) show_help ;;
+    *) echo "Unknown parameter: $1"; exit 1 ;;
+  esac
+  shift
+done
+
+# Check dir exists
+if [[ ! -d "$DIR" ]]; then
+  echo "Error: Directory '$DIR' doesn't exist."
+  exit 1
+fi
+
+CONTENT=""
+
+# Collect
+while IFS= read -r file; do
+    CONTENT+="\n$file\n\`\`\`\n"
+    CONTENT+="$(cat "$file")\n"
+    CONTENT+="\`\`\`\n"
+done < <(find "$DIR" -type f ! -path "*/node_modules/*" ! -name "pnpm-lock.yaml" ! -name "print.sh")
+
+# Tree
+CONTENT+="\n\nDirectory tree:\n\`\`\`\n"
+CONTENT+="$(tree -I "node_modules" "$DIR")\n"
+CONTENT+="\`\`\`\n"
+
+# Output
+if [ -n "$OUTPUT_FILE" ]; then
+  echo -e "$CONTENT" > "$OUTPUT_FILE"
+  echo "✅ Output saved to $OUTPUT_FILE"
+elif [ "$USE_XCLIP" = true ]; then
+  if command -v xclip &>/dev/null; then
+    echo -e "$CONTENT" | xclip -selection clipboard
+    echo "✅ Copied content to clipboard"
+  else
+    echo "⚠️  Error: 'xclip' not found. Install with: sudo apt install xclip"
+    exit 1
+  fi
+else
+  echo -e "$CONTENT"
+fi

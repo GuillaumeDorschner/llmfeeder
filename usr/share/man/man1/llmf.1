@@ -1,0 +1,67 @@
+.\" Modified from standard man(1) format
+.Dd March 2025
+.Dt LLMF 1
+.Os
+.Sh NAME
+.Nm llmf
+.Nd CLI tool to feed your LLM the necessary context to get help.
+.Sh SYNOPSIS
+.Nm
+.Op Fl d Ar path
+.Op Fl o Ar file
+.Op Fl -no-xclip
+.Op Fl h
+.Sh DESCRIPTION
+.Nm
+is a command-line utility that collects file contents and directory structure information, formats it, and either saves it to a file or copies it to the clipboard.
+
+By default, the tool processes the current directory and copies the output to the clipboard if `xclip` is installed.
+
+.Sh OPTIONS
+.Bl -tag -width "-o FILE"
+.It Fl d , Fl -dir Ar path
+Specify the directory to process (default: current directory).
+.It Fl o , Fl -output Ar file
+Save the output to a file instead of copying to the clipboard.
+.It Fl -no-xclip
+Disable copying the output to the clipboard.
+.It Fl h , Fl -help
+Display this help message and exit.
+.El
+
+.Sh EXAMPLES
+.Bl -tag -width "llmf -d /path/to/dir"
+.It Xo
+.Nm
+.Xc
+List contents and structure of the current directory.
+.It Xo
+.Nm Fl d /path/to/dir
+.Xc
+Process a specific directory.
+.It Xo
+.Nm Fl o output.txt
+.Xc
+Save output to a file instead of copying to clipboard.
+.It Xo
+.Nm Fl -no-xclip
+.Xc
+Disable clipboard copying.
+.El
+
+.Sh NOTES
+If `xclip` is not installed and clipboard copying is enabled, the script will display an error and exit.
+
+.Sh FILES
+.Bl -tag -width "/usr/local/bin/llmf" -compact
+.It Pa /usr/local/bin/llmf
+Installation path for the script.
+.El
+
+.Sh SEE ALSO
+.Xr find 1 ,
+.Xr tree 1 ,
+.Xr xclip 1
+
+.Sh AUTHORS
+Written by Guillaume Dorschner.

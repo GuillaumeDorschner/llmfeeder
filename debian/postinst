@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -e
+chmod +x /usr/local/bin/llmf
+
+echo "llmf installed successfully ✅"
+
+exit 0

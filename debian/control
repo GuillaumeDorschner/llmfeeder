@@ -1,0 +1,10 @@
+Package: llmfeeder
+Version: 1.0.0
+Section: utils
+Priority: optional
+Architecture: all
+Maintainer: Guillaume Dorschner <guillaume.dorschner@icloud.com>
+Build-Depends: debhelper (>= 11)
+
+Description: CLI tool to feed your LLM the necessary context to get help
+Depends: bash, tree, xclip
