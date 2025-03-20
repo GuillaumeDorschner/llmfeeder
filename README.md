@@ -7,7 +7,7 @@
 ### Debian / Ubuntu
 
 ```sh
-echo "deb [trusted=yes] https://guillaumedorschner.github.io/llmfeeder/core/stable/apt/ ./" | sudo tee /etc/apt/sources.list.d/llmfeeder.list
+echo "deb [trusted=yes] https://guillaumedorschner.github.io/llmfeeder/core/stable/apt/ ./" | sudo tee /etc/apt/sources.list.d/llmf.list
 sudo apt update
 sudo apt install llmf
 ```
@@ -15,8 +15,8 @@ sudo apt install llmf
 ### RedHat / Fedora
 
 ```sh
-sudo tee /etc/yum.repos.d/llmfeeder.repo <<EOF
-[llmfeeder]
+sudo tee /etc/yum.repos.d/llmf.repo <<EOF
+[llmf]
 name=LLMFeeder Repository
 baseurl=https://yourusername.github.io/llmfeeder/core/stable/rpm/
 enabled=1

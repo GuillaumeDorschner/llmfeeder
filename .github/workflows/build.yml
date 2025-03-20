@@ -43,7 +43,7 @@ jobs:
           cp usr/share/man/man1/llmf.1 debian/usr/share/man/man1/llmf.1
 
           cat <<EOF > debian/DEBIAN/control
-          Package: llmfeeder
+          Package: llmf
           Version: ${{ env.VERSION }}
           Section: utils
           Priority: optional
@@ -53,12 +53,12 @@ jobs:
           Description: CLI tool to feed your LLM the necessary context to get help
           EOF
 
-          dpkg-deb --build debian build/deb/llmfeeder_${{ env.VERSION }}.deb
+          dpkg-deb --build debian build/deb/llmf${{ env.VERSION }}.deb
 
       - name: Upload Debian artifact
         uses: actions/upload-artifact@v4
         with:
-          name: llmfeeder-deb-${{ env.VERSION }}
+          name: llmf-deb-${{ env.VERSION }}
           path: build/deb/*.deb
 
   build-redhat:
@@ -82,14 +82,14 @@ jobs:
             dnf install -y rpm-build git tar
             sed -i "s/^Version: .*$/Version:        ${{ env.VERSION }}/" rpmbuild/SPECS/llmf.spec
             mkdir -p /workspace/rpmbuild/SOURCES/
-            tar --transform="s,^,llmfeeder-${{ env.VERSION }}/," -czvf /workspace/rpmbuild/SOURCES/llmfeeder-${{ env.VERSION }}.tar.gz src/ usr/
+            tar --transform="s,^,llmf-${{ env.VERSION }}/," -czvf /workspace/rpmbuild/SOURCES/llmf-${{ env.VERSION }}.tar.gz src/ usr/
             rpmbuild --define "_topdir /workspace/rpmbuild" -bb rpmbuild/SPECS/llmf.spec
           '
 
       - name: Upload RPM artifact
         uses: actions/upload-artifact@v4
         with:
-          name: llmfeeder-rpm-${{ env.VERSION }}
+          name: llmf-rpm-${{ env.VERSION }}
           path: rpmbuild/RPMS/noarch/*.rpm
 
   push-packages:
@@ -113,13 +113,13 @@ jobs:
       - name: Download Debian artifact
         uses: actions/download-artifact@v4
         with:
-          name: llmfeeder-deb-${{ env.VERSION }}
+          name: llmf-deb-${{ env.VERSION }}
           path: core/stable/apt/
 
       - name: Download RPM artifact
         uses: actions/download-artifact@v4
         with:
-          name: llmfeeder-rpm-${{ env.VERSION }}
+          name: llmf-rpm-${{ env.VERSION }}
           path: core/stable/rpm/
 
       - name: Generate APT Repository

@@ -1,4 +1,4 @@
-Name:           llmfeeder
+Name:           llmf
 Version:        0.0.0
 Release:        1%{?dist}
 Summary:        CLI tool to feed your LLM the necessary context to get help
@@ -11,7 +11,7 @@ BuildArch:      noarch
 Requires:       bash, tree, xclip
 
 %description
-`llmfeeder` is a CLI tool designed to extract relevant context from a directory and format it for easy input into a Large Language Model (LLM).
+`llmf` is a CLI tool designed to extract relevant context from a directory and format it for easy input into a Large Language Model (LLM).
 
 %prep
 %setup -q
